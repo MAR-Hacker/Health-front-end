@@ -10,7 +10,6 @@ export default function Page() {
       <HeroSection />
       <FeaturesSection />
       <HowItWorksSection />
-
       <CTASection />
       <Footer />
     </div>

@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import AxiosProvider from "../providers/axios-provider";
 // import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "react-hot-toast";
+import JotaiProvider from "../providers/jotai-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
@@ -29,7 +30,7 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             > */}
-            {children}
+            <JotaiProvider>{children}</JotaiProvider>
             <Toaster />
             {/* </ThemeProvider> */}
           </body>

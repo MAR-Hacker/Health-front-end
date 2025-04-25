@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import GetStarted from "../sample/getstarted";
 
 export default function HeroSection() {
   return (
@@ -47,12 +48,7 @@ export default function HeroSection() {
               transition={{ delay: 0.5, duration: 0.5 }}
               className="flex flex-col sm:flex-row gap-3 pt-4"
             >
-              <Button
-                size="lg"
-                className="bg-teal-600 hover:bg-teal-700 text-white"
-              >
-                Get Started
-              </Button>
+              <GetStarted />
               <Button
                 size="lg"
                 variant="outline"
