@@ -40,7 +40,7 @@ export default function ProfilePage() {
         }
       } else if (userRole === "user") {
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${userId}`
         );
 
         if (res.status === 200) {
