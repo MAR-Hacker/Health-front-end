@@ -7,7 +7,7 @@ import Footer from "../components/landing/footer";
 import Navbar from "../components/landing/Navbar";
 export default function Page() {
   return (
-    <div>
+    <div className="overflow-hidden">
       {/* <Navbar /> */}
       <HeroSection />
       <FeaturesSection />
