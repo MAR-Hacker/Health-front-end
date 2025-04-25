@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSignIn } from "@clerk/nextjs";
+import { Label } from "@radix-ui/react-label";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -10,42 +11,45 @@ export default function LoginPage() {
   const { signIn, isLoaded } = useSignIn();
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showOtp, setShowOtp] = useState(false);
+  const { signIn, isLoaded } = useSignIn();
 
   const handleSendOtp = async () => {
-    if (!isLoaded) return;
-
+    if (!isLoaded || !email) return;
     setIsLoading(true);
+
     try {
-      // Create sign in attempt with email
+      // Start the sign-in process with email
       await signIn.create({
         identifier: email,
       });
 
-      // Find the email factor
+      // Get the email address ID from the list of supported factors
+      const { supportedFirstFactors } = signIn;
+
+      // Find the email code strategy and get the email_address_id
       const emailFactor = signIn.supportedFirstFactors?.find(
-        (f) => f.strategy === "email_code"
+        (factor) => factor.strategy === "email_code"
       );
 
-      // Only proceed if we found a valid email factor
-      if (emailFactor?.emailAddressId) {
-        // Prepare email verification
-        await signIn.prepareFirstFactor({
-          strategy: "email_code",
-          emailAddressId: emailFactor.emailAddressId,
-        });
-
-        setOtpSent(true);
-        toast.success("Verification code sent to your email!");
-      } else {
-        throw new Error("No email verification method available");
+      if (!emailFactor || !("emailAddressId" in emailFactor)) {
+        throw new Error("Email verification not available");
       }
+
+      // Prepare email verification with the correct ID
+      await signIn.prepareFirstFactor({
+        strategy: "email_code",
+        emailAddressId: emailFactor.emailAddressId,
+      });
+
+      setShowOtp(true);
+      toast.success("OTP sent to your email");
     } catch (err: any) {
-      console.error("Error sending code:", err);
+      console.error("Login error:", err);
       toast.error(
-        err.errors?.[0]?.message || "Failed to send verification code"
+        err.errors?.[0]?.message || "Failed to send OTP. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -53,23 +57,27 @@ export default function LoginPage() {
   };
 
   const handleVerifyOtp = async () => {
-    if (!isLoaded || !otp) return;
+    if (!otp || !isLoaded) return;
 
     setIsLoading(true);
     try {
-      // Attempt verification with the code
+      // Verify the OTP code
       const result = await signIn.attemptFirstFactor({
         strategy: "email_code",
         code: otp,
       });
 
       if (result.status === "complete") {
-        toast.success("Login successful!");
-        router.push("/dashboard");
+        router.push("/home/doctors");
+        toast.success("Login successful");
+      } else {
+        toast.error("Verification failed. Please try again.");
       }
     } catch (err: any) {
-      console.error("Error verifying code:", err);
-      toast.error(err.errors?.[0]?.message || "Invalid verification code");
+      console.error("Verification error:", err);
+      toast.error(
+        err.errors?.[0]?.message || "Verification failed. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -80,42 +88,42 @@ export default function LoginPage() {
       <div className="flex flex-col gap-4 border border-gray-200 dark:border-gray-700 p-8 rounded-lg w-full max-w-md mx-4 bg-white dark:bg-gray-800 shadow-lg">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Welcome back
+            Welcome Back
           </h2>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            {otpSent
-              ? "Enter the verification code sent to your email"
-              : "Enter your email to receive a verification code"}
+            {showOtp
+              ? "Enter the OTP sent to your email"
+              : "Enter your email to receive an OTP"}
           </p>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label
+            <Label
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
               Email Address
-            </label>
+            </Label>
             <Input
               id="email"
               type="email"
-              placeholder="your@email.com"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="focus-visible:ring-2 focus-visible:ring-primary"
-              disabled={otpSent || isLoading}
+              disabled={showOtp}
             />
           </div>
 
-          {otpSent && (
+          {showOtp && (
             <div>
-              <label
+              <Label
                 htmlFor="otp"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 Verification Code
-              </label>
+              </Label>
               <Input
                 id="otp"
                 type="text"
@@ -129,7 +137,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        {!otpSent ? (
+        {!showOtp ? (
           <Button
             variant="default"
             className="w-full mt-2 h-10 rounded-md"
@@ -139,18 +147,7 @@ export default function LoginPage() {
             {isLoading ? "Sending..." : "Send Verification Code"}
           </Button>
         ) : (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="w-full h-10 rounded-md"
-              onClick={() => {
-                setOtpSent(false);
-                setOtp("");
-              }}
-              disabled={isLoading}
-            >
-              Change Email
-            </Button>
+          <div className="flex flex-col gap-2">
             <Button
               variant="default"
               className="w-full h-10 rounded-md"
@@ -159,6 +156,17 @@ export default function LoginPage() {
             >
               {isLoading ? "Verifying..." : "Login"}
             </Button>
+            <Button
+              variant="outline"
+              className="w-full h-10 rounded-md"
+              onClick={() => {
+                setShowOtp(false);
+                setOtp("");
+              }}
+              disabled={isLoading}
+            >
+              Change Email
+            </Button>
           </div>
         )}
 
@@ -166,7 +174,7 @@ export default function LoginPage() {
           Don't have an account?{" "}
           <button
             onClick={() => router.push("/signup")}
-            className="text-primary font-medium hover:underline"
+            className="text-blue-600 font-medium hover:underline"
           >
             Sign up
           </button>
