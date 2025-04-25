@@ -41,7 +41,7 @@ export default function AmbulancePage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-md">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 shadow-md rounded-[12px]">
         <h1 className="text-3xl font-bold text-center text-white">
           Available Ambulances
         </h1>

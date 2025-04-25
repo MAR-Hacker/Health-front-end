@@ -1,31 +1,50 @@
 "use client";
+import DoctorProfile from "@/src/components/profiles/doctor-profile";
 import { useUser } from "@clerk/clerk-react";
 import axios from "axios";
 import React, { useEffect } from "react";
 
+export interface DoctorProfile {
+  id: string;
+  userId: string;
+  name: string;
+  specialization: string;
+  experience: number;
+  location: string;
+  phoneNumber: string;
+  email: string;
+  imageUrl: string;
+  createdAt: string; // or `Date` if you're parsing it
+  updatedAt: string; // or `Date` if you're parsing it
+}
+
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
-  const userId = user?.id; // Get the user ID from Clerk
+  const userId = user?.id;
 
-  const userRole = user?.publicMetadata?.role; // Default to 'patient' if role is not set
+  const userRole = user?.publicMetadata?.role;
+  const [doctorData, setDoctorData] = React.useState<DoctorProfile | null>(
+    null
+  );
+  const [patientData, setPatientData] = React.useState<any>(null); // Adjust type as needed
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (userRole === "doctor") {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/doctors/${userId}`
+        const res = await axios.get<DoctorProfile>(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/doctors/getById/${userId}`
         );
 
         if (res.status === 200) {
-          console.log("Doctor data:", res.data);
+          setDoctorData(res.data);
         }
-      } else {
+      } else if (userRole === "user") {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`
         );
 
         if (res.status === 200) {
-          console.log("Patient data:", res.data);
+          setPatientData(res.data);
         }
       }
     };
@@ -45,8 +64,11 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
-      <h1 className="text-3xl font-bold text-gray-800">Profile Page</h1>
-      <p className="mt-4 text-gray-600">This is the profile page.</p>
+      {userRole === "doctor" && doctorData ? (
+        <DoctorProfile data={doctorData} /> // Pass the doctor data to the component
+      ) : (
+        <h1 className="text-2xl font-bold">Patient Profile</h1>
+      )}
     </div>
   );
 }
