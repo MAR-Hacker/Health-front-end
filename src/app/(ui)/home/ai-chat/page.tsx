@@ -94,8 +94,8 @@ export default function AIChatPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] bg-gray-100">
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 shadow-md">
+    <div className="flex flex-col h-full bg-gray-100">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 shadow-md rounded-[12px]">
         <h1 className="text-xl font-semibold text-center text-white">
           Health Assistant AI
         </h1>
