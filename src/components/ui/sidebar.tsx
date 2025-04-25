@@ -11,7 +11,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useState } from "react";
-import { useClerk } from "@clerk/nextjs";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 // Mock user data - in a real app, you would get this from your auth context
@@ -25,6 +25,9 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { signOut } = useClerk();
   const router = useRouter();
+  const { user, isLoaded } = useUser();
+  const userRole = user?.publicMetadata?.role; // Default to 'patient' if role is not set
+
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
@@ -79,7 +82,7 @@ const Sidebar = () => {
           <Link href="/profile/user">
             <div className="relative cursor-pointer group">
               <img
-                src={user.imageUrl}
+                src={user?.imageUrl}
                 alt="Profile"
                 className="w-10 h-10 rounded-full border-2 border-transparent group-hover:border-blue-500 transition-all"
               />
