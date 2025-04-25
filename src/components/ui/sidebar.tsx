@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
-import { useClerk, useUser } from "@clerk/nextjs";
+
 import { useRouter } from "next/navigation";
 
 const Sidebar = () => {
@@ -56,7 +56,7 @@ const Sidebar = () => {
       : [
           { href: "/home", label: "Home", icon: <Home size={20} /> },
           {
-            href: "/home/doctors",
+            href: "/doctors",
             label: "Find Doctors",
             icon: <UserRound size={20} />,
           },
