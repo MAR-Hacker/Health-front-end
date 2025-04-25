@@ -55,7 +55,7 @@ const Sidebar = () => {
       : [
           { href: "/home", label: "Home", icon: <Home size={20} /> },
           {
-            href: "/home/doctors",
+            href: "/doctors",
             label: "Find Doctors",
             icon: <UserRound size={20} />,
           },
