@@ -7,6 +7,7 @@ import AxiosProvider from "../providers/axios-provider";
 import { Toaster } from "react-hot-toast";
 import JotaiProvider from "../providers/jotai-provider";
 import Sidebar from "../components/ui/sidebar";
+import { StreamVideoProvider } from "../providers/stream-video-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
@@ -31,16 +32,18 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             > */}
-
-            <JotaiProvider>
-              <div className="flex">
-                <div className="w-[20%]">
-                  <Sidebar />
+            <StreamVideoProvider>
+              <JotaiProvider>
+                <div className="flex">
+                  <div className="w-[20%]">
+                    <Sidebar />
+                  </div>
+                  <div className="w-[80%]">{children}</div>
                 </div>
-                <div className="w-[80%]">{children}</div>
-              </div>
-            </JotaiProvider>
-            <Toaster />
+              </JotaiProvider>
+
+              <Toaster />
+            </StreamVideoProvider>
             {/* </ThemeProvider> */}
           </body>
         </html>

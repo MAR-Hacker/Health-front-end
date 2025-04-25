@@ -55,7 +55,7 @@ const Sidebar = () => {
       : [
           { href: "/home", label: "Home", icon: <Home size={20} /> },
           {
-            href: "/doctors",
+            href: "/doctor",
             label: "Find Doctors",
             icon: <UserRound size={20} />,
           },
@@ -68,6 +68,11 @@ const Sidebar = () => {
             href: "/home/emergency",
             label: "Emergency Service",
             icon: <Ambulance size={20} />,
+          },
+          {
+            href: "home/appointments",
+            label: "My Appointments",
+            icon: <Calendar size={20} />,
           },
         ];
 

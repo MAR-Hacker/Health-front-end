@@ -4,16 +4,16 @@ import { Calendar, Clock, Video, Phone } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 
-interface User {
+interface Doctor {
   id: string;
   userId: string;
   name: string;
-  age: number;
-  gender: string;
-  imageUrl: string;
+  specialization: string;
+  experience: number;
+  location: string;
   phoneNumber: string;
   email: string;
-  location: string;
+  imageUrl: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,14 +30,13 @@ interface Appointment {
   id: string;
   date: string;
   reason: string;
-  status: "PENDING" | "COMPLETED" | "CANCELLED";
+  status: string;
   userId: string;
   doctorId: string;
   availabilityId: string;
   createdAt: string;
-  user: User; // Ensure user is included
+  doctor: Doctor;
   availability: Availability;
-  type?: string; // Added because it's used in the UI
 }
 
 export default function UserAppointments() {
@@ -81,14 +80,32 @@ export default function UserAppointments() {
   const displayedAppointments =
     activeTab === "upcoming" ? upcomingAppointments : pastAppointments;
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string, format?: string) => {
     try {
-      const options: Intl.DateTimeFormatOptions = {
+      let options: Intl.DateTimeFormatOptions = {
         weekday: "short",
         year: "numeric",
         month: "short",
         day: "numeric",
       };
+
+      // Use different options if format is specified
+      if (format === "dd/MM/yyyy") {
+        options = {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        };
+      }
+
+      if (format === "hh:mm a") {
+        options = {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        };
+      }
+
       return new Date(dateStr).toLocaleDateString("en-US", options);
     } catch (err) {
       return dateStr;
@@ -138,84 +155,90 @@ export default function UserAppointments() {
         </div>
       ) : (
         <div className="space-y-4">
-          {displayedAppointments.map((appointment) => (
-            <div
-              key={appointment.id}
-              className="bg-white rounded-lg shadow-md p-6"
-            >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div className="flex items-center mb-4 md:mb-0">
-                  {/* Check if user exists and name is defined */}
-                  <img
-                    src={appointment.user?.imageUrl}
-                    alt={appointment.user?.name || "User Image"}
-                    className="w-16 h-16 rounded-full mr-4 object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        "https://randomuser.me/api/portraits/men/32.jpg";
-                    }}
-                  />
-                  <div>
-                    <h3 className="text-lg text-black font-medium">
-                      {appointment.user?.name || "Unknown User"}
-                    </h3>
-                    <p className="text-blue-600">{appointment.reason}</p>
+          {displayedAppointments &&
+            displayedAppointments.length > 0 &&
+            displayedAppointments.map((appointment) => (
+              <div
+                key={appointment.id}
+                className="bg-white rounded-lg shadow-md p-6"
+              >
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center mb-4 md:mb-0">
+                    {/* Check if user exists and name is defined */}
+                    <img
+                      src={appointment.doctor.imageUrl}
+                      alt={appointment.doctor.name}
+                      className="w-16 h-16 rounded-full mr-4 object-cover"
+                    />
+                    <div>
+                      <h3 className="text-lg text-black font-medium">
+                        {appointment.doctor.name}
+                      </h3>
+                      <p className="text-blue-600">{appointment.reason}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col md:items-end">
+                    <div className="flex items-center mb-2">
+                      <Calendar size={18} className="mr-2 text-gray-500" />
+                      <span className="text-black">
+                        {formatDate(appointment.date, "hh:mm a")}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock size={18} className="mr-2 text-gray-500" />
+                      <span className="text-black">
+                        {formatDate(appointment.createdAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col md:items-end">
-                  <div className="flex items-center mb-2">
-                    <Calendar size={18} className="mr-2 text-gray-500" />
-                    <span className="text-black">
-                      {formatDate(appointment.date)}
+                <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                  {/* <div className="flex items-center">
+                    {appointment. === "video" ? (
+                      <Video size={18} className="mr-2 text-green-600" />
+                    ) : (
+                      <Phone size={18} className="mr-2 text-blue-600" />
+                    )}
+                    <span className="capitalize text-black">
+                      {appointment.type || "In-person"} consultation
                     </span>
-                  </div>
-                  <div className="flex items-center">
-                    <Clock size={18} className="mr-2 text-gray-500" />
-                    <span className="text-black">
-                      {formatDate(appointment.createdAt)}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                  </div> */}
 
-              <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                <div className="flex items-center">
-                  {appointment.type === "video" ? (
-                    <Video size={18} className="mr-2 text-green-600" />
-                  ) : (
-                    <Phone size={18} className="mr-2 text-blue-600" />
+                  {appointment.status === "CONFIRMED" && (
+                    <div className="flex gap-2">
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded text-sm">
+                        Join Call
+                      </button>
+                      {/* <button className="border border-gray-300 hover:bg-gray-100 text-gray-700 py-2 px-4 rounded text-sm">
+                        Reschedule
+                      </button> */}
+                    </div>
                   )}
-                  <span className="capitalize text-black">
-                    {appointment.type || "In-person"} consultation
-                  </span>
+
+                  {appointment.status === "PENDING" && (
+                    <div className="flex gap-2">
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded text-sm">
+                        Pending
+                      </button>
+                    </div>
+                  )}
+
+                  {appointment.status === "COMPLETED" && (
+                    <span className="px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                      Completed
+                    </span>
+                  )}
+
+                  {appointment.status === "CANCELLED" && (
+                    <span className="px-3 py-1 rounded-full text-sm bg-red-100 text-red-800">
+                      Cancelled
+                    </span>
+                  )}
                 </div>
-
-                {appointment.status === "PENDING" && (
-                  <div className="flex gap-2">
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded text-sm">
-                      Join Call
-                    </button>
-                    <button className="border border-gray-300 hover:bg-gray-100 text-gray-700 py-2 px-4 rounded text-sm">
-                      Reschedule
-                    </button>
-                  </div>
-                )}
-
-                {appointment.status === "COMPLETED" && (
-                  <span className="px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-                    Completed
-                  </span>
-                )}
-
-                {appointment.status === "CANCELLED" && (
-                  <span className="px-3 py-1 rounded-full text-sm bg-red-100 text-red-800">
-                    Cancelled
-                  </span>
-                )}
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       )}
     </div>

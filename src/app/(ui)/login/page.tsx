@@ -67,7 +67,7 @@ export default function LoginPage() {
       });
 
       if (result.status === "complete") {
-        router.push("/home/doctors");
+        router.push("/doctor");
         toast.success("Login successful");
       } else {
         toast.error("Verification failed. Please try again.");

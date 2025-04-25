@@ -1,9 +1,19 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, Video } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
+
+// Add GetStream related imports
+import {
+  useStreamVideoClient,
+  Call,
+  CallControls,
+  StreamVideo,
+  StreamCall,
+} from "@stream-io/video-react-sdk";
+import "@stream-io/video-react-sdk/dist/css/styles.css";
 
 interface Patient {
   id: string;
@@ -34,6 +44,7 @@ interface Appointment {
   doctorId: string;
   availabilityId: string;
   createdAt: string;
+  meetingId?: string; // Add meetingId field for video calls
   user: Patient;
   availability: Availability;
 }
@@ -43,30 +54,128 @@ export default function DoctorAppointments() {
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeCall, setActiveCall] = useState<Call | null>(null);
+  const [showMeeting, setShowMeeting] = useState(false);
 
   const { userId } = useAuth();
 
-  const handlePatchStatus = async (id: string, status: string) => {
+  // Initialize GetStream client
+  // Note: In a real implementation, you would get these from environment variables
+  const apiKey = process.env.NEXT_PUBLIC_GETSTREAM_API_KEY;
+  const token = process.env.NEXT_PUBLIC_GETSTREAM_TOKEN;
+
+  const client = useStreamVideoClient();
+
+  // Create a meeting for the appointment
+  const createMeeting = async (appointment: Appointment) => {
     try {
-      const res = await axios.patch(
-        `https://health-backend-m8l5.onrender.com/accept-appointment/update-status/${id}`,
+      // Check if client is available
+      if (!client) {
+        toast.error("Video client not initialized");
+        return;
+      }
+
+      // Create a unique call ID based on the appointment
+      const callId = `appointment-${appointment.id}`;
+
+      // Create the call
+      const call = client.call("default", callId);
+
+      // Get or create the call
+      await call.getOrCreate({
+        data: {
+          custom: {
+            // Custom data for your call
+            appointmentId: appointment.id,
+            doctorId: appointment.doctorId,
+            patientId: appointment.userId,
+            patientName: appointment.user.name,
+            reason: appointment.reason,
+            date: appointment.date,
+          },
+        },
+      });
+
+      // Update the appointment with the meeting ID in your backend
+      await axios.patch(
+        `https://health-backend-m8l5.onrender.com/accept-appointment/update-status/${appointment.id}`,
         {
-          status: status,
+          status: "COMPLETED",
+          meetingId: callId,
         }
       );
-      console.log("Response:", res.data); // Log the response data
-      if (res.status === 200) {
-        setAppointments((prevAppointments) =>
-          prevAppointments.map((appointment: any) =>
-            appointment.id === id
-              ? { ...appointment, status: status }
-              : appointment
-          )
+
+      // Update local state
+      setAppointments((prevAppointments) =>
+        prevAppointments.map((apt) =>
+          apt.id === appointment.id
+            ? { ...apt, status: "COMPLETED", meetingId: callId }
+            : apt
+        )
+      );
+
+      toast.success("Appointment accepted and meeting created!");
+      return callId;
+    } catch (error) {
+      console.error("Error creating meeting:", error);
+      toast.error("Failed to create meeting room");
+      return null;
+    }
+  };
+
+  const joinMeeting = async (meetingId: string) => {
+    try {
+      if (!client) {
+        toast.error("Video client not initialized");
+        return;
+      }
+
+      // Get the call object
+      const call = client.call("default", meetingId);
+
+      // Join the call
+      await call.join({ create: false });
+
+      // Set the active call
+      setActiveCall(call);
+      setShowMeeting(true);
+    } catch (error) {
+      console.error("Error joining meeting:", error);
+      toast.error("Failed to join meeting");
+    }
+  };
+
+  const handlePatchStatus = async (
+    appointment: Appointment,
+    status: string
+  ) => {
+    try {
+      // If accepting the appointment, create a meeting
+      if (status === "COMPLETED") {
+        const meetingId = await createMeeting(appointment);
+        if (!meetingId) {
+          // If meeting creation failed, don't proceed
+          return;
+        }
+      } else {
+        // For other status updates like cancellation
+        const res = await axios.patch(
+          `https://health-backend-m8l5.onrender.com/accept-appointment/update-status/${appointment.id}`,
+          {
+            status: status,
+          }
         );
-        if (status === "COMPLETED") {
-          toast.success("Appointment completed successfully!");
-        } else if (status === "CANCELLED") {
-          toast.success("Appointment cancelled successfully!");
+
+        if (res.status === 200) {
+          setAppointments((prevAppointments) =>
+            prevAppointments.map((apt: any) =>
+              apt.id === appointment.id ? { ...apt, status: status } : apt
+            )
+          );
+
+          if (status === "CANCELLED") {
+            toast.success("Appointment cancelled successfully!");
+          }
         }
       }
     } catch (error) {
@@ -102,6 +211,25 @@ export default function DoctorAppointments() {
       fetchAppointments();
     }
   }, [userId]);
+
+  // Check if appointment time has arrived
+  const isMeetingTimeReached = (appointment: Appointment) => {
+    if (!appointment.date || !appointment.availability?.startTime) return false;
+
+    const now = new Date();
+    const appointmentDate = new Date(appointment.date);
+    const [startHours, startMinutes] = appointment.availability.startTime
+      .split(":")
+      .map(Number);
+
+    appointmentDate.setHours(startHours, startMinutes);
+
+    // Meeting is available 5 minutes before actual time until the end time
+    const meetingAvailableTime = new Date(appointmentDate);
+    meetingAvailableTime.setMinutes(meetingAvailableTime.getMinutes() - 5);
+
+    return now >= meetingAvailableTime;
+  };
 
   const upcomingAppointments = appointments.filter(
     (app) => app.status === "PENDING"
@@ -139,6 +267,35 @@ export default function DoctorAppointments() {
       return timeStr;
     }
   };
+
+  // If we're showing a meeting, render the video call UI
+  if (showMeeting && activeCall) {
+    return (
+      <div className="fixed inset-0 bg-black z-50 flex flex-col">
+        <div className="bg-gray-900 text-white p-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Appointment Video Call</h2>
+          <button
+            onClick={() => {
+              activeCall.leave();
+              setShowMeeting(false);
+              setActiveCall(null);
+            }}
+            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white"
+          >
+            End Call
+          </button>
+        </div>
+        <div className="flex-1 relative">
+          <StreamCall call={activeCall}>
+            {/* Recording UI is handled by StreamCall or CallControls */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+              <CallControls />
+            </div>
+          </StreamCall>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-[12px]">
@@ -233,7 +390,7 @@ export default function DoctorAppointments() {
                     <button
                       className="bg-blue-600 h-9 hover:bg-blue-700 text-white py-2 px-4 rounded text-sm"
                       onClick={() =>
-                        handlePatchStatus(appointment.id, "COMPLETED")
+                        handlePatchStatus(appointment, "COMPLETED")
                       }
                     >
                       Accept
@@ -241,7 +398,7 @@ export default function DoctorAppointments() {
                     <button
                       className="border h-9 border-gray-300 hover:bg-gray-100 text-gray-700 py-2 px-4 rounded text-sm"
                       onClick={() =>
-                        handlePatchStatus(appointment.id, "CANCELLED")
+                        handlePatchStatus(appointment, "CANCELLED")
                       }
                     >
                       Reject
@@ -250,9 +407,22 @@ export default function DoctorAppointments() {
                 )}
 
                 {appointment.status === "COMPLETED" && (
-                  <span className="px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-                    Completed
-                  </span>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                      Accepted
+                    </span>
+
+                    {appointment.meetingId &&
+                      isMeetingTimeReached(appointment) && (
+                        <button
+                          onClick={() => joinMeeting(appointment.meetingId!)}
+                          className="flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                        >
+                          <Video size={16} />
+                          <span>Join Call</span>
+                        </button>
+                      )}
+                  </div>
                 )}
 
                 {appointment.status === "CANCELLED" && (
