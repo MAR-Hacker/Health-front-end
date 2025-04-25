@@ -1,4 +1,6 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+
+import { useUser } from "@clerk/clerk-react";
+import { clerkClient, clerkMiddleware } from "@clerk/nextjs/server";
 
 export default clerkMiddleware();
 

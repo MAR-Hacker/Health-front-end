@@ -8,6 +8,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
+  const { signIn, isLoaded } = useSignIn();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -18,7 +19,7 @@ export default function LoginPage() {
   const handleSendOtp = async () => {
     if (!isLoaded || !email) return;
     setIsLoading(true);
-    
+
     try {
       // Start the sign-in process with email
       await signIn.create({
@@ -27,22 +28,22 @@ export default function LoginPage() {
 
       // Get the email address ID from the list of supported factors
       const { supportedFirstFactors } = signIn;
-      
+
       // Find the email code strategy and get the email_address_id
       const emailFactor = signIn.supportedFirstFactors?.find(
-        factor => factor.strategy === "email_code"
+        (factor) => factor.strategy === "email_code"
       );
-      
+
       if (!emailFactor || !("emailAddressId" in emailFactor)) {
         throw new Error("Email verification not available");
       }
-      
+
       // Prepare email verification with the correct ID
       await signIn.prepareFirstFactor({
         strategy: "email_code",
         emailAddressId: emailFactor.emailAddressId,
       });
-      
+
       setShowOtp(true);
       toast.success("OTP sent to your email");
     } catch (err: any) {
@@ -98,7 +99,7 @@ export default function LoginPage() {
 
         <div className="space-y-4">
           <div>
-            <Label 
+            <Label
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
@@ -117,7 +118,7 @@ export default function LoginPage() {
 
           {showOtp && (
             <div>
-              <Label 
+              <Label
                 htmlFor="otp"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
@@ -130,6 +131,7 @@ export default function LoginPage() {
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 className="focus-visible:ring-2 focus-visible:ring-primary"
+                disabled={isLoading}
               />
             </div>
           )}

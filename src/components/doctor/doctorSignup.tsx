@@ -9,8 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSignUp } from "@clerk/clerk-react";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 const specializations = [
   "Cardiologist",
@@ -24,6 +27,7 @@ const specializations = [
 ];
 
 export default function DoctorSignupPage() {
+  const { signUp, isLoaded } = useSignUp();
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
@@ -33,17 +37,91 @@ export default function DoctorSignupPage() {
     phoneNumber: "",
     email: "",
   });
+  const [showOtp, setShowOtp] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Add your signup logic here
-    console.log("Doctor form submitted:", formData);
-    router.push("/verify-doctor"); // Redirect to verification page
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      toast.error("Name is required");
+      return false;
+    }
+    if (!formData.specialization) {
+      toast.error("Specialization is required");
+      return false;
+    }
+    if (!formData.email.trim()) {
+      toast.error("Email is required");
+      return false;
+    }
+    if (!formData.phoneNumber.trim()) {
+      toast.error("Phone number is required");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!isLoaded || !validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      await signUp.create({
+        emailAddress: formData.email,
+        firstName: formData.name.split(" ")[0],
+        lastName: formData.name.split(" ")[1] || "",
+      });
+
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setShowOtp(true);
+      toast.success("Verification code sent to your email");
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      toast.error(
+        err.errors?.[0]?.message || "Signup failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!otp || !isLoaded) return;
+
+    setIsLoading(true);
+    try {
+      const verification = await signUp.attemptEmailAddressVerification({
+        code: otp,
+      });
+
+      if (verification.status === "complete") {
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/doctors/create`,
+          {
+            userId: verification.createdUserId,
+            ...formData,
+            experience: parseInt(formData.experience, 10),
+          }
+        );
+
+        if (res.status === 201) {
+          toast.success("Doctor account created successfully!");
+          router.push("/doctor-dashboard");
+        }
+      }
+    } catch (err: any) {
+      console.error("Verification error:", err);
+      toast.error(
+        err.errors?.[0]?.message || "Verification failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -58,7 +136,7 @@ export default function DoctorSignupPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
             <Input
@@ -150,6 +228,21 @@ export default function DoctorSignupPage() {
             />
           </div>
 
+          {showOtp && (
+            <div className="space-y-2">
+              <Label htmlFor="otp">Verification Code</Label>
+              <Input
+                id="otp"
+                name="otp"
+                type="text"
+                placeholder="Enter verification code"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
           <div className="space-y-2 pt-2">
             <Label className="flex items-center gap-2">
               <input
@@ -161,13 +254,27 @@ export default function DoctorSignupPage() {
             </Label>
           </div>
 
-          <Button
-            type="submit"
-            variant="default"
-            className="w-full mt-4 h-10 rounded-md"
-          >
-            Register as Doctor
-          </Button>
+          {!showOtp ? (
+            <Button
+              type="button"
+              variant="default"
+              className="w-full mt-4 h-10 rounded-md"
+              onClick={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? "Processing..." : "Register as Doctor"}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="default"
+              className="w-full mt-4 h-10 rounded-md"
+              onClick={handleVerify}
+              disabled={isLoading}
+            >
+              {isLoading ? "Verifying..." : "Verify Account"}
+            </Button>
+          )}
 
           <div className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
             Already registered?{" "}
@@ -179,7 +286,7 @@ export default function DoctorSignupPage() {
               Doctor Login
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
