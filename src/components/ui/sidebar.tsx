@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
-import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 const Sidebar = () => {
