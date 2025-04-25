@@ -37,7 +37,7 @@ export default function RootLayout({
                 <div className="w-[20%]">
                   <Sidebar />
                 </div>
-                <div className="w-full ">{children}</div>
+                <div className="w-[80%]">{children}</div>
               </div>
             </JotaiProvider>
             <Toaster />

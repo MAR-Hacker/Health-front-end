@@ -1,7 +1,9 @@
 "use client";
 import DoctorProfile from "@/src/components/profiles/doctor-profile";
+import UserProfile from "@/src/components/profiles/user-profile";
 import { useUser } from "@clerk/clerk-react";
 import axios from "axios";
+import { User } from "lucide-react";
 import React, { useEffect } from "react";
 
 export interface DoctorProfile {
@@ -67,7 +69,7 @@ export default function ProfilePage() {
       {userRole === "doctor" && doctorData ? (
         <DoctorProfile data={doctorData} /> // Pass the doctor data to the component
       ) : (
-        <h1 className="text-2xl font-bold">Patient Profile</h1>
+        <UserProfile data={patientData} /> // Pass the patient
       )}
     </div>
   );

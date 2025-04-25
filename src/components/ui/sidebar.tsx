@@ -28,7 +28,6 @@ const Sidebar = () => {
   const { user, isLoaded } = useUser();
   const userRole = user?.publicMetadata?.role; // Default to 'patient' if role is not set
 
-
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
@@ -71,7 +70,7 @@ const Sidebar = () => {
       {/* Sidebar */}
       <div
         className={`
-        fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-40
+        fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-40 
         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
         md:translate-x-0 md:w-64 w-3/4
         flex flex-col
