@@ -14,7 +14,6 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
-  const { signIn, isLoaded } = useSignIn();
 
   const handleSendOtp = async () => {
     if (!isLoaded || !email) return;
