@@ -37,7 +37,7 @@ const Sidebar = () => {
   };
 
   const navItems = [
-    { href: "/home/doctors", label: "Doctors", icon: <UserRound size={20} /> },
+    { href: "/home", label: "Home", icon: <UserRound size={20} /> },
     {
       href: "/home/appointments",
       label: "Scheduled Calls",

@@ -1,9 +1,31 @@
 "use client"
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Video, Phone } from 'lucide-react';
+import axios from 'axios';
+import { useAuth } from '@clerk/nextjs';
 
+// Define the response type from your API
+interface ApiAppointment {
+  _id: string;
+  userId: string;
+  doctorId: {
+    _id: string;
+    name: string;
+    specialization: string;
+    imageUrl: string;
+  };
+  date: string;
+  time: string;
+  status: string;
+  meetingType: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+// Define our local appointment type
 type Appointment = {
-  id: number;
+  id: string;
   doctorName: string;
   doctorSpecialty: string;
   doctorImage: string;
@@ -16,43 +38,83 @@ type Appointment = {
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
+  const { userId } = useAuth();
+
   useEffect(() => {
-    // Mock appointments data
-    const mockAppointments: Appointment[] = [
-      {
-        id: 1,
-        doctorName: "Dr. Sarah Johnson",
-        doctorSpecialty: "Cardiologist",
-        doctorImage: "https://randomuser.me/api/portraits/women/44.jpg",
-        date: "2025-05-04",
-        time: "10:00 AM",
-        type: 'video',
-        status: 'upcoming'
-      },
-      {
-        id: 2,
-        doctorName: "Dr. Michael Chen",
-        doctorSpecialty: "Neurologist",
-        doctorImage: "https://randomuser.me/api/portraits/men/32.jpg",
-        date: "2025-05-06",
-        time: "3:30 PM",
-        type: 'phone',
-        status: 'upcoming'
-      },
-      {
-        id: 3,
-        doctorName: "Dr. Emma Wilson",
-        doctorSpecialty: "Pediatrician",
-        doctorImage: "https://randomuser.me/api/portraits/women/67.jpg",
-        date: "2025-04-20",
-        time: "1:15 PM",
-        type: 'video',
-        status: 'completed'
+    const fetchAppointments = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Use the userId from Clerk auth, or fallback to hardcoded ID for testing
+        const id = userId || 'user_2wE5LzManinuLsPI5nOivpfTxda';
+        const response = await axios.get(
+          `https://health-backend-m8l5.onrender.com/users/get-user-appointment/${id}`
+        );
+        
+        // Transform API data to our local format
+        const transformedAppointments: Appointment[] = response.data.map((apt: ApiAppointment) => ({
+          id: apt._id,
+          doctorName: apt.doctorId.name,
+          doctorSpecialty: apt.doctorId.specialization,
+          doctorImage: apt.doctorId.imageUrl || "https://randomuser.me/api/portraits/men/32.jpg", // Fallback image
+          date: apt.date,
+          time: apt.time,
+          type: (apt.meetingType as 'video' | 'inPerson' | 'phone') || 'video',
+          // Map status to our local status format
+          status: apt.status === 'pending' ? 'upcoming' : 
+                 apt.status === 'cancelled' ? 'cancelled' : 'completed'
+        }));
+        
+        setAppointments(transformedAppointments);
+      } catch (err) {
+        console.error("Error fetching appointments:", err);
+        setError("Failed to load appointments. Please try again later.");
+        
+        // Fallback to mock data for development/demo purposes
+        const mockAppointments: Appointment[] = [
+          {
+            id: "1",
+            doctorName: "Dr. Sarah Johnson",
+            doctorSpecialty: "Cardiologist",
+            doctorImage: "https://randomuser.me/api/portraits/women/44.jpg",
+            date: "2025-05-04",
+            time: "10:00 AM",
+            type: 'video',
+            status: 'upcoming'
+          },
+          {
+            id: "2",
+            doctorName: "Dr. Michael Chen",
+            doctorSpecialty: "Neurologist",
+            doctorImage: "https://randomuser.me/api/portraits/men/32.jpg",
+            date: "2025-05-06",
+            time: "3:30 PM",
+            type: 'phone',
+            status: 'upcoming'
+          },
+          {
+            id: "3",
+            doctorName: "Dr. Emma Wilson",
+            doctorSpecialty: "Pediatrician",
+            doctorImage: "https://randomuser.me/api/portraits/women/67.jpg",
+            date: "2025-04-20",
+            time: "1:15 PM",
+            type: 'video',
+            status: 'completed'
+          }
+        ];
+        setAppointments(mockAppointments);
+      } finally {
+        setIsLoading(false);
       }
-    ];
-    setAppointments(mockAppointments);
-  }, []);
+    };
+
+    fetchAppointments();
+  }, [userId]);
   
   const upcomingAppointments = appointments.filter(app => app.status === 'upcoming');
   const pastAppointments = appointments.filter(app => ['completed', 'cancelled'].includes(app.status));
@@ -60,8 +122,17 @@ export default function AppointmentsPage() {
   const displayedAppointments = activeTab === 'upcoming' ? upcomingAppointments : pastAppointments;
   
   const formatDate = (dateStr: string) => {
-    const options: Intl.DateTimeFormatOptions = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateStr).toLocaleDateString('en-US', options);
+    try {
+      const options: Intl.DateTimeFormatOptions = { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      };
+      return new Date(dateStr).toLocaleDateString('en-US', options);
+    } catch (err) {
+      return dateStr; // If date parsing fails, return original string
+    }
   };
 
   return (
@@ -83,7 +154,15 @@ export default function AppointmentsPage() {
         </button>
       </div>
       
-      {displayedAppointments.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+          <p>{error}</p>
+        </div>
+      ) : displayedAppointments.length === 0 ? (
         <div className="bg-gray-50 rounded-lg p-8 text-center">
           <p className="text-gray-500 text-lg">No {activeTab} appointments found.</p>
         </div>
@@ -96,7 +175,10 @@ export default function AppointmentsPage() {
                   <img 
                     src={appointment.doctorImage} 
                     alt={appointment.doctorName} 
-                    className="w-16 h-16 rounded-full mr-4"
+                    className="w-16 h-16 rounded-full mr-4 object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://randomuser.me/api/portraits/men/32.jpg";
+                    }}
                   />
                   <div>
                     <h3 className="text-lg text-black font-medium">{appointment.doctorName}</h3>
