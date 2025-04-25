@@ -1,3 +1,17 @@
+<<<<<<< HEAD
+"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  UserRound,
+  Calendar,
+  MessageSquare,
+  Ambulance,
+  Menu,
+  X,
+} from "lucide-react";
+import { useState } from "react";
+=======
 "use client"
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -14,21 +28,14 @@ const user = {
   name: "John Doe",
   imageUrl: "https://randomuser.me/api/portraits/men/44.jpg" // Placeholder image
 };
+>>>>>>> df88e69ad5d7066ac03aa74d7ce98bdf7835771c
 
 const Sidebar = () => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const { signOut } = useClerk();
-  const router = useRouter();
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
-  };
-
-  const handleSignOut = () => {
-    signOut(() => {
-      router.push("/login");
-    });
   };
 
   const navItems = [
@@ -53,6 +60,12 @@ const Sidebar = () => {
         fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-40
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
         md:translate-x-0 md:w-64 w-3/4
+<<<<<<< HEAD
+      `}
+      >
+        <div className="p-5 border-b">
+          <h1 className="text-2xl font-bold text-blue-600">Health App</h1>
+=======
         flex flex-col
       `}>
         <div className="p-5 border-b flex items-center justify-between">
@@ -67,9 +80,10 @@ const Sidebar = () => {
               <div className="absolute inset-0 rounded-full bg-blue-600 opacity-0 group-hover:opacity-20 transition-opacity"></div>
             </div>
           </Link>
+>>>>>>> df88e69ad5d7066ac03aa74d7ce98bdf7835771c
         </div>
 
-        <nav className="p-4 flex-grow">
+        <nav className="p-4">
           <ul className="space-y-2">
             {navItems.map((item) => (
               <li key={item.href}>
@@ -91,17 +105,6 @@ const Sidebar = () => {
             ))}
           </ul>
         </nav>
-        
-        {/* Logout button at the bottom */}
-        <div className="p-4 border-t mt-auto">
-          <button 
-            onClick={handleSignOut}
-            className="flex items-center gap-3 p-3 rounded-md w-full hover:bg-red-50 text-red-600 transition-colors"
-          >
-            <LogOut size={20} />
-            <span>Logout</span>
-          </button>
-        </div>
       </div>
     </>
   );
