@@ -4,14 +4,14 @@ import { Calendar, Clock, Video } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
+import { StreamCall, StreamVideo } from "@stream-io/video-react-sdk";
 
 // Add GetStream related imports
 import {
   useStreamVideoClient,
   Call,
+  CallRecording,
   CallControls,
-  StreamVideo,
-  StreamCall,
 } from "@stream-io/video-react-sdk";
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 
@@ -61,8 +61,8 @@ export default function DoctorAppointments() {
 
   // Initialize GetStream client
   // Note: In a real implementation, you would get these from environment variables
-  const apiKey = process.env.NEXT_PUBLIC_GETSTREAM_API_KEY;
-  const token = process.env.NEXT_PUBLIC_GETSTREAM_TOKEN;
+  const apiKey = process.env.NEXT_PUBLIC_GETSTREAM_API_KEY || "your_api_key";
+  const token = process.env.NEXT_PUBLIC_GETSTREAM_TOKEN || "your_token";
 
   const client = useStreamVideoClient();
 
@@ -84,8 +84,8 @@ export default function DoctorAppointments() {
       // Get or create the call
       await call.getOrCreate({
         data: {
+          // Custom data for your call
           custom: {
-            // Custom data for your call
             appointmentId: appointment.id,
             doctorId: appointment.doctorId,
             patientId: appointment.userId,
@@ -285,6 +285,7 @@ export default function DoctorAppointments() {
             End Call
           </button>
         </div>
+
         <div className="flex-1 relative">
           <StreamCall call={activeCall}>
             {/* Recording UI is handled by StreamCall or CallControls */}
