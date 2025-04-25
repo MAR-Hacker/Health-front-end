@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
-
 import { useRouter } from "next/navigation";
 
 const Sidebar = () => {
@@ -43,8 +42,8 @@ const Sidebar = () => {
       ? [
           { href: "/home", label: "Home", icon: <Home size={20} /> },
           {
-            href: "/home/my-slots",
-            label: "My Slots",
+            href: "/home/appointments",
+            label: "My Appointments",
             icon: <Calendar size={20} />,
           },
           {
@@ -56,7 +55,7 @@ const Sidebar = () => {
       : [
           { href: "/home", label: "Home", icon: <Home size={20} /> },
           {
-            href: "/home/doctors",
+            href: "/doctors",
             label: "Find Doctors",
             icon: <UserRound size={20} />,
           },
@@ -93,7 +92,7 @@ const Sidebar = () => {
       >
         <div className="p-5 border-b flex items-center justify-between">
           <h1 className="text-xl font-bold text-blue-600">Health App</h1>
-          <Link href="/profile/user">
+          <Link href="/profile">
             <div className="relative cursor-pointer group">
               <img
                 src={

@@ -36,7 +36,7 @@ const DoctorProfile: FC<DoctorProfileProps> = ({ data }) => {
             <div className="relative">
               {data.imageUrl ? (
                 <img
-                  src={data.imageUrl || "/placeholder.svg"}
+                  src={data.imageUrl}
                   alt={data.name}
                   width={150}
                   height={150}
