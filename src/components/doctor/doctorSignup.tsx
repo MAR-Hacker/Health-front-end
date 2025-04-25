@@ -63,6 +63,10 @@ export default function DoctorSignupPage() {
       toast.error("Phone number is required");
       return false;
     }
+    if (!formData.experience.trim() || isNaN(Number(formData.experience))) {
+      toast.error("Valid experience is required");
+      return false;
+    }
     return true;
   };
 
@@ -73,8 +77,6 @@ export default function DoctorSignupPage() {
     try {
       await signUp.create({
         emailAddress: formData.email,
-        firstName: formData.name.split(" ")[0],
-        lastName: formData.name.split(" ")[1] || "",
       });
 
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
