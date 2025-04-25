@@ -1,24 +1,78 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
+import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
+  const { signIn, isLoaded } = useSignIn();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendOtp = () => {
-    // Add your OTP sending logic here
-    setOtpSent(true);
+  const handleSendOtp = async () => {
+    if (!isLoaded) return;
+
+    setIsLoading(true);
+    try {
+      // Create sign in attempt with email
+      await signIn.create({
+        identifier: email,
+      });
+
+      // Find the email factor
+      const emailFactor = signIn.supportedFirstFactors?.find(
+        (f) => f.strategy === "email_code"
+      );
+
+      // Only proceed if we found a valid email factor
+      if (emailFactor?.emailAddressId) {
+        // Prepare email verification
+        await signIn.prepareFirstFactor({
+          strategy: "email_code",
+          emailAddressId: emailFactor.emailAddressId,
+        });
+
+        setOtpSent(true);
+        toast.success("Verification code sent to your email!");
+      } else {
+        throw new Error("No email verification method available");
+      }
+    } catch (err: any) {
+      console.error("Error sending code:", err);
+      toast.error(
+        err.errors?.[0]?.message || "Failed to send verification code"
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleLogin = () => {
-    // Add your login verification logic here
-    router.push("/dashboard"); // Redirect after successful login
+  const handleVerifyOtp = async () => {
+    if (!isLoaded || !otp) return;
+
+    setIsLoading(true);
+    try {
+      // Attempt verification with the code
+      const result = await signIn.attemptFirstFactor({
+        strategy: "email_code",
+        code: otp,
+      });
+
+      if (result.status === "complete") {
+        toast.success("Login successful!");
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      console.error("Error verifying code:", err);
+      toast.error(err.errors?.[0]?.message || "Invalid verification code");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -30,8 +84,8 @@ export default function LoginPage() {
           </h2>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
             {otpSent
-              ? "Enter the OTP sent to your number"
-              : "Enter your Phone number to receive OTP"}
+              ? "Enter the verification code sent to your email"
+              : "Enter your email to receive a verification code"}
           </p>
         </div>
 
@@ -41,16 +95,16 @@ export default function LoginPage() {
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Phone Number
+              Email Address
             </label>
             <Input
-              id="number"
-              type="text"
-              placeholder="Enter your email"
+              id="email"
+              type="email"
+              placeholder="your@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="focus-visible:ring-2 focus-visible:ring-primary"
-              disabled={otpSent}
+              disabled={otpSent || isLoading}
             />
           </div>
 
@@ -60,15 +114,16 @@ export default function LoginPage() {
                 htmlFor="otp"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                OTP
+                Verification Code
               </label>
               <Input
                 id="otp"
                 type="text"
-                placeholder="Enter 6-digit OTP"
+                placeholder="Enter 6-digit code"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 className="focus-visible:ring-2 focus-visible:ring-primary"
+                disabled={isLoading}
               />
             </div>
           )}
@@ -79,26 +134,30 @@ export default function LoginPage() {
             variant="default"
             className="w-full mt-2 h-10 rounded-md"
             onClick={handleSendOtp}
-            disabled={!email}
+            disabled={!email || isLoading}
           >
-            Send OTP
+            {isLoading ? "Sending..." : "Send Verification Code"}
           </Button>
         ) : (
           <div className="flex gap-2">
             <Button
               variant="outline"
               className="w-full h-10 rounded-md"
-              onClick={() => setOtpSent(false)}
+              onClick={() => {
+                setOtpSent(false);
+                setOtp("");
+              }}
+              disabled={isLoading}
             >
               Change Email
             </Button>
             <Button
               variant="default"
               className="w-full h-10 rounded-md"
-              onClick={handleLogin}
-              disabled={otp.length !== 6}
+              onClick={handleVerifyOtp}
+              disabled={!otp || isLoading}
             >
-              Login
+              {isLoading ? "Verifying..." : "Login"}
             </Button>
           </div>
         )}

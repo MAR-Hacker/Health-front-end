@@ -14,11 +14,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAtom } from "jotai";
 import { userTypeAtom } from "@/src/store/atom";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 export default function GetStarted() {
   const [userType, setUserType] = useAtom(userTypeAtom);
   const router = useRouter();
-  console.log("User Type:", userType);
 
   return (
     <div>
