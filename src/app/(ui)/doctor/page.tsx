@@ -144,7 +144,7 @@ export default function DoctorsPage() {
             <div
               key={doctor.id}
               className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer"
-              onClick={() => router.push(`/doctor/${doctor.id}`)}
+              onClick={() => router.push(`/doctor/${doctor.userId}`)}
             >
               <div className="p-6">
                 <div className="flex items-center mb-4">

@@ -35,7 +35,7 @@ const UserProfile: FC<UserProfileProps> = ({ data }) => {
             <div className="relative">
               {data.imageUrl ? (
                 <img
-                  src={data.imageUrl}
+                  src={data?.imageUrl}
                   alt={data.name}
                   width={150}
                   height={150}

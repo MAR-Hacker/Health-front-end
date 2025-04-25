@@ -4,6 +4,7 @@ import Image from "next/image";
 import { use, type FC } from "react";
 import { MapPin, Phone, Mail, Calendar, Award, Clock } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
+import AlertDialogDemo from "../doctor/doctor-slots";
 
 interface DoctorProfileData {
   id: string;
@@ -170,9 +171,7 @@ const DoctorProfile: FC<DoctorProfileProps> = ({ data }) => {
             </div>
             {user.id !== data.userId && (
               <div className="mt-8">
-                <button className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
-                  Book Appointment
-                </button>
+                <AlertDialogDemo doctorId={data.userId} />
               </div>
             )}
           </div>
