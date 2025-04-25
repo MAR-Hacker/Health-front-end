@@ -4,7 +4,12 @@ import { Calendar, Clock, Video } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
-import { StreamCall, StreamVideo } from "@stream-io/video-react-sdk";
+import {
+  SpeakerLayout,
+  StreamCall,
+  StreamTheme,
+  StreamVideo,
+} from "@stream-io/video-react-sdk";
 
 // Add GetStream related imports
 import {
@@ -124,6 +129,7 @@ export default function DoctorAppointments() {
   };
 
   const joinMeeting = async (meetingId: string) => {
+    console.log("Joining meeting with ID:", meetingId);
     try {
       if (!client) {
         toast.error("Video client not initialized");
@@ -288,10 +294,10 @@ export default function DoctorAppointments() {
 
         <div className="flex-1 relative">
           <StreamCall call={activeCall}>
-            {/* Recording UI is handled by StreamCall or CallControls */}
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+            <StreamTheme>
+              <SpeakerLayout participantsBarPosition="bottom" />
               <CallControls />
-            </div>
+            </StreamTheme>
           </StreamCall>
         </div>
       </div>
@@ -413,16 +419,13 @@ export default function DoctorAppointments() {
                       Accepted
                     </span>
 
-                    {appointment.meetingId &&
-                      isMeetingTimeReached(appointment) && (
-                        <button
-                          onClick={() => joinMeeting(appointment.meetingId!)}
-                          className="flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-                        >
-                          <Video size={16} />
-                          <span>Join Call</span>
-                        </button>
-                      )}
+                    <button
+                      onClick={() => joinMeeting(appointment.meetingId!)}
+                      className="flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                    >
+                      <Video size={16} />
+                      <span>Join Call</span>
+                    </button>
                   </div>
                 )}
 

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Phone, MapPin, Clock, User, Truck } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type Ambulance = {
   id: string;
@@ -19,6 +20,7 @@ export default function AmbulancePage() {
   const [ambulances, setAmbulances] = useState<Ambulance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   // Fetch ambulance data on mount
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function AmbulancePage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => alert(`Contacting ${ambulance.driverName}...`)}
+                  onClick={() => router.push(`/home/emergency/${ambulance.id}`)}
                   className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
                 >
                   Contact Ambulance

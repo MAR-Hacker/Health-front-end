@@ -30,8 +30,6 @@ export function StreamVideoProvider({ children }: PropsWithChildren) {
       apiKey,
       user: {
         id: userId,
-        name: userName,
-        image: user.imageUrl,
       },
       token: userToken,
     });
