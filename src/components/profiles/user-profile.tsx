@@ -4,7 +4,7 @@ import { FC } from "react";
 import { MapPin, Phone, Mail, Calendar, Clock } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 
-interface UserProfileData {
+interface UserProfiledata {
   id: string;
   userId: string;
   name: string;
@@ -19,7 +19,7 @@ interface UserProfileData {
 }
 
 interface UserProfileProps {
-  data: UserProfileData;
+  data?: UserProfiledata;
 }
 
 const UserProfile: FC<UserProfileProps> = ({ data }) => {
@@ -33,10 +33,10 @@ const UserProfile: FC<UserProfileProps> = ({ data }) => {
         <div className="container mx-auto px-4">
           <div className="absolute -bottom-20 left-1/2 transform -translate-x-1/2 md:left-10 md:translate-x-0 flex md:flex-row flex-col items-center md:items-end gap-6">
             <div className="relative">
-              {data.imageUrl ? (
+              {data?.imageUrl ? (
                 <img
-                  src={data.imageUrl}
-                  alt={data.name}
+                  src={data?.imageUrl}
+                  alt={data?.name}
                   width={150}
                   height={150}
                   className="rounded-full object-cover border-4 border-white shadow-lg"
@@ -44,17 +44,17 @@ const UserProfile: FC<UserProfileProps> = ({ data }) => {
               ) : (
                 <div className="w-[150px] h-[150px] rounded-full bg-blue-200 flex items-center justify-center border-4 border-white shadow-lg">
                   <span className="text-4xl font-bold text-blue-700">
-                    {data.name.charAt(0)}
+                    {data?.name.charAt(0)}
                   </span>
                 </div>
               )}
             </div>
             <div className="text-center md:text-left pb-2">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                {data.name}
+                {data?.name}
               </h1>
               <p className="text-lg text-gray-700 dark:text-gray-300">
-                {data.gender}, {data.age} years old
+                {data?.gender}, {data?.age} years old
               </p>
             </div>
           </div>
@@ -76,7 +76,7 @@ const UserProfile: FC<UserProfileProps> = ({ data }) => {
                     Location
                   </p>
                   <p className="text-gray-800 dark:text-gray-200">
-                    {data.location}
+                    {data?.location}
                   </p>
                 </div>
               </div>
@@ -87,7 +87,7 @@ const UserProfile: FC<UserProfileProps> = ({ data }) => {
                     Phone
                   </p>
                   <p className="text-gray-800 dark:text-gray-200">
-                    {data.phoneNumber}
+                    {data?.phoneNumber}
                   </p>
                 </div>
               </div>
@@ -98,7 +98,7 @@ const UserProfile: FC<UserProfileProps> = ({ data }) => {
                     Email
                   </p>
                   <p className="text-gray-800 dark:text-gray-200">
-                    {data.email}
+                    {data?.email}
                   </p>
                 </div>
               </div>
@@ -117,11 +117,11 @@ const UserProfile: FC<UserProfileProps> = ({ data }) => {
                     Account Created
                   </p>
                   <p className="text-gray-800 dark:text-gray-200">
-                    {new Date(data.createdAt).toLocaleDateString("en-US", {
+                    {data?.createdAt ? new Date(data.createdAt).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
-                    })}
+                    }) : "N/A"}
                   </p>
                 </div>
               </div>
@@ -132,11 +132,11 @@ const UserProfile: FC<UserProfileProps> = ({ data }) => {
                     Last Updated
                   </p>
                   <p className="text-gray-800 dark:text-gray-200">
-                    {new Date(data.updatedAt).toLocaleDateString("en-US", {
+                    {data?.updatedAt ? new Date(data.updatedAt).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
-                    })}
+                    }) : "N/A"}
                   </p>
                 </div>
               </div>
@@ -145,10 +145,10 @@ const UserProfile: FC<UserProfileProps> = ({ data }) => {
                   About
                 </h3>
                 <p className="text-gray-700 dark:text-gray-300">
-                  {data.name} is a valued member of our platform, currently
-                  residing in {data.location}. This profile was created on{" "}
-                  {new Date(data.createdAt).toLocaleDateString()}, and last
-                  updated on {new Date(data.updatedAt).toLocaleDateString()}.
+                  {data?.name} is a valued member of our platform, currently
+                  residing in {data?.location}. This profile was created on{" "}
+                  {data?.createdAt ? new Date(data.createdAt).toLocaleDateString() : "N/A"}, and last
+                  updated on {data?.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : "N/A"}.
                 </p>
               </div>
             </div>
