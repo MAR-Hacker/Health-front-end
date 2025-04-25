@@ -4,7 +4,7 @@ import { FC } from "react";
 import { MapPin, Phone, Mail, Calendar, Clock } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 
-interface UserProfileData {
+interface UserProfiledata {
   id: string;
   userId: string;
   name: string;
@@ -19,7 +19,7 @@ interface UserProfileData {
 }
 
 interface UserProfileProps {
-  data: UserProfileData;
+  data?: UserProfiledata;
 }
 
 const UserProfile: FC<UserProfileProps> = ({ data }) => {
