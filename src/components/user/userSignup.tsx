@@ -91,7 +91,7 @@ export default function UserSignupPage() {
 
         if (res.status === 201) {
           toast.success("Account created successfully!");
-          router.push("/dashboard"); // Redirect after successful signup
+          router.push("/home/doctors"); // Redirect after successful signup
         }
       }
     } catch (err: any) {
